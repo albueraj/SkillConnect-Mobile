@@ -34,7 +34,7 @@ import ClientAccepted from "./screens/ClientAccepted";
 import Chat from "./screens/Chat";
 import ProfileReviews from "./screens/ProfileReviews";
 import OrderDetails from "./screens/records/OrderDetails";
-
+import BlockedWorker from "./screens/BlockedWorker";
 import CustomDrawer from "./components/CustomDrawer";
 
 const Stack = createNativeStackNavigator();
@@ -357,6 +357,21 @@ export default function App() {
             <Stack.Screen
               name="Blocked"
               component={Blocked}
+              options={({ navigation }) => ({
+                headerTitleStyle: { fontSize: 17 },
+                headerLeft: () => (
+                  <TouchableOpacity
+                    onPress={() => navigation.goBack()}
+                    style={{ marginLeft: 10 }}
+                  >
+                    <Ionicons name="chevron-back" size={24} color="#000" />
+                  </TouchableOpacity>
+                ),
+              })}
+            />
+            <Stack.Screen
+              name="BlockedWorker"
+              component={BlockedWorker}
               options={({ navigation }) => ({
                 headerTitleStyle: { fontSize: 17 },
                 headerLeft: () => (

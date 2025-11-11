@@ -1,48 +1,46 @@
 import React from 'react';
 import {
-  // Removed SafeAreaView
   View,
   Text,
   StyleSheet,
   FlatList,
+  TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-// Mock data for the list
 const blockedData = [
   { id: '1', name: 'Juan Dela Cruz', service: 'Mechanical', rating: '1.0' },
-  { id: '2', name: 'Juan Dela Cruz', service: 'Plumbing', rating: '1.0' },
+  { id: '2', name: 'Pedro Santos', service: 'Plumbing', rating: '1.0' },
 ];
 
-const WorkerRow = ({ item }) => (
-  <View style={styles.tableRow}>
+const WorkerRow = ({ item, onPress }) => (
+  <TouchableOpacity onPress={() => onPress(item)} style={styles.tableRow}>
     <Text style={[styles.tableCell, styles.nameCell]}>{item.name}</Text>
     <Text style={[styles.tableCell, styles.serviceCell]}>{item.service}</Text>
     <View style={[styles.tableCell, styles.ratingCell]}>
       <Ionicons name="star" size={16} color="#FFD700" />
       <Text style={styles.ratingText}>{item.rating}</Text>
     </View>
-  </View>
+  </TouchableOpacity>
 );
 
 const Blocked = ({ navigation }) => {
-  return (
-    // Use a regular View as the container
-    <View style={styles.container}>
-      {/* The custom header has been removed. The navigator will add it. */}
+  const handlePress = (worker) => {
+    navigation.navigate("BlockedWorker", { worker });
+  };
 
-      {/* Table Header */}
+  return (
+    <View style={styles.container}>
       <View style={styles.tableHeader}>
         <Text style={[styles.headerCell, styles.nameCell]}>Name</Text>
         <Text style={[styles.headerCell, styles.serviceCell]}>Service Type</Text>
         <Text style={[styles.headerCell, styles.ratingCell]}>Ratings</Text>
       </View>
 
-      {/* Table Body */}
       <FlatList
         data={blockedData}
         keyExtractor={item => item.id}
-        renderItem={({ item }) => <WorkerRow item={item} />}
+        renderItem={({ item }) => <WorkerRow item={item} onPress={handlePress} />}
       />
     </View>
   );
@@ -52,10 +50,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    
-    
   },
-  // Removed custom header, backButton, and headerTitle styles
   tableHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',

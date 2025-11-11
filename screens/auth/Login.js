@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -10,112 +10,99 @@ import {
   Platform,
   Alert,
   Image,
-  ActivityIndicator,
 } from "react-native";
+import { Picker } from "@react-native-picker/picker";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Login({ navigation, setIsLoggedIn }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [selectedRole, setSelectedRole] = useState("Service Provider");
+  const [email, setEmail] = useState("jeremy@gmail.com");
+  const [password, setPassword] = useState("1234");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState({});
 
-  // Load remembered email if exists
-  useEffect(() => {
-    const loadRememberedEmail = async () => {
-      const rememberedEmail = await AsyncStorage.getItem("rememberedEmail");
-      if (rememberedEmail) setEmail(rememberedEmail);
-    };
-    loadRememberedEmail();
-  }, []);
+  const handleLoginSuccess = async () => {
+    setIsLoggedIn(true);
+    const pendingScreen = await AsyncStorage.getItem("pendingScreen");
 
-  const validateForm = () => {
-    const newErrors = {};
-    if (!email.trim()) newErrors.email = "Email is required.";
-    else if (!/\S+@\S+\.\S+/.test(email))
-      newErrors.email = "Please enter a valid email address.";
-
-    if (!password.trim()) newErrors.password = "Password is required.";
-    else if (password.length < 4)
-      newErrors.password = "Password must be at least 4 characters.";
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    if (pendingScreen) {
+      await AsyncStorage.removeItem("pendingScreen");
+      navigation.replace(pendingScreen);
+    } else {
+      navigation.replace("Home");
+    }
   };
 
   const handleLogin = async () => {
-    if (!validateForm()) return;
-    setIsLoading(true);
-
-    try {
-      // Simulate successful login (replace with API later)
-      const userData = { email, isVerified: true };
-      await AsyncStorage.setItem("user", JSON.stringify(userData));
-      await AsyncStorage.setItem("isAuthorized", "true");
-
-      setIsLoggedIn(true);
-      Alert.alert("Login Successful", `Welcome back!`);
-
-      // Navigate based on verification or user type
-      navigation.replace("Home"); // or "PlaceOrder"
-    } catch (error) {
-      console.error("Login Error:", error);
-      Alert.alert("Error", "Something went wrong. Please try again.");
-    } finally {
-      setIsLoading(false);
+    if (!email.trim() || !password.trim()) {
+      Alert.alert("Error", "Email address and password are required.");
+      return;
     }
+
+    await AsyncStorage.setItem("userRole", selectedRole);
+
+    if (selectedRole === "Service Provider") {
+      navigation.navigate("Home");
+    } else if (selectedRole === "Community Member") {
+      navigation.navigate("PlaceOrder");
+    } else {
+      Alert.alert("Error", "Invalid role selected.");
+    }
+
+    handleLoginSuccess();
   };
 
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: "#fff" }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 30 : 0}
     >
       <ScrollView
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
       >
+        {/* Logo */}
         <Image
-          source={{
-            uri: "https://i.ibb.co/MxKr7FVx/1000205778-removebg-preview.png",
-          }}
+          source={{ uri: "https://i.ibb.co/MxKr7FVx/1000205778-removebg-preview.png" }}
           style={styles.logo}
         />
 
+        {/* Title */}
         <Text style={styles.title}>Welcome Back!</Text>
         <Text style={styles.subTitle}>Sign in to your account</Text>
 
-        {/* Email */}
-        <View style={styles.inputContainer}>
-          <Ionicons name="mail-outline" size={20} color="#888" />
-          <TextInput
-            style={[styles.input, errors.email && styles.errorInput]}
-            placeholder="Enter your email address"
-            value={email}
-            onChangeText={(text) => {
-              setEmail(text);
-              setErrors((prev) => ({ ...prev, email: "" }));
-            }}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
+        {/* Role Selection */}
+        <Text style={styles.label}>Login as:</Text>
+        <View style={styles.pickerContainer}>
+          <Picker
+            selectedValue={selectedRole}
+            style={styles.picker}
+            onValueChange={(itemValue) => setSelectedRole(itemValue)}
+          >
+            <Picker.Item label="Service Provider" value="Service Provider" />
+            <Picker.Item label="Community Member" value="Community Member" />
+          </Picker>
         </View>
-        {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+
+        {/* Email */}
+        <TextInput
+          style={styles.input}
+          placeholder="Enter your email address"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
 
         {/* Password */}
         <View style={styles.passwordContainer}>
-          <Ionicons name="lock-closed-outline" size={20} color="#888" />
           <TextInput
-            style={[styles.passwordInput, errors.password && styles.errorInput]}
+            style={styles.passwordInput}
             placeholder="Enter your password"
             secureTextEntry={!showPassword}
             value={password}
-            onChangeText={(text) => {
-              setPassword(text);
-              setErrors((prev) => ({ ...prev, password: "" }));
-            }}
+            onChangeText={setPassword}
           />
           <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
             <Ionicons
@@ -125,24 +112,10 @@ export default function Login({ navigation, setIsLoggedIn }) {
             />
           </TouchableOpacity>
         </View>
-        {errors.password && (
-          <Text style={styles.errorText}>{errors.password}</Text>
-        )}
 
         {/* Login Button */}
-        <TouchableOpacity
-          style={[styles.loginButton, isLoading && { opacity: 0.7 }]}
-          onPress={handleLogin}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <>
-              <ActivityIndicator color="#fff" />
-              <Text style={styles.loginText}>  Signing In...</Text>
-            </>
-          ) : (
-            <Text style={styles.loginText}>LOGIN</Text>
-          )}
+        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+          <Text style={styles.loginText}>LOGIN</Text>
         </TouchableOpacity>
 
         {/* Footer */}
@@ -152,13 +125,13 @@ export default function Login({ navigation, setIsLoggedIn }) {
           >
             <Text style={styles.forgotText}>Forgot Password?</Text>
           </TouchableOpacity>
+
           <Text style={styles.registerText}>
-            Don't have an account?{" "}
             <Text
               style={styles.registerLink}
               onPress={() => navigation.navigate("Register")}
             >
-              Create one here
+              Create an Account
             </Text>
           </Text>
         </View>
@@ -181,51 +154,68 @@ const styles = StyleSheet.create({
     height: 100,
     resizeMode: "contain",
     marginBottom: 8,
+    marginTop: -40,
   },
   title: {
     fontSize: 28,
     fontWeight: "700",
     color: "#ce4da3ff",
     marginBottom: 3,
-  },
+    },
   subTitle: {
     fontSize: 16,
     color: "#ce4da3ff",
     marginBottom: 20,
+
   },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+  label: {
+    alignSelf: "flex-start",
+    fontWeight: "600",
+    marginTop: 10,
+    color: "#333",
+  },
+  pickerContainer: {
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 12,
-    backgroundColor: "#f9f9f9",
+    padding: 2,
     width: "100%",
-    marginBottom: 10,
+    marginTop: 5,
+    marginBottom: 15,
+    backgroundColor: "#f9f9f9",
+  },
+  picker: {
+    height: 50,
+    width: "100%",
   },
   input: {
-    flex: 1,
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 17,
+    marginTop: 5,
+    marginBottom: 15,
     fontSize: 14,
-    marginLeft: 5,
+    backgroundColor: "#f9f9f9",
   },
   passwordContainer: {
+    width: "100%",
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 10,
     paddingHorizontal: 10,
-    paddingVertical: 12,
+    paddingVertical: 7,
+    marginTop: 5,
+    marginBottom: 20,
     backgroundColor: "#f9f9f9",
-    width: "100%",
-    marginBottom: 15,
   },
   passwordInput: {
     flex: 1,
-    fontSize: 14,
-    marginLeft: 5,
+    paddingVertical: 10,
   },
   loginButton: {
     width: "100%",
@@ -234,6 +224,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 10,
     marginTop: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 3,
   },
   loginText: {
     fontSize: 15,
@@ -242,28 +237,21 @@ const styles = StyleSheet.create({
   },
   footer: {
     alignItems: "center",
-    marginTop: 80,
+    marginTop: 100,
   },
   forgotText: {
     color: "#ce4da3ff",
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "600",
     marginBottom: 12,
   },
   registerText: {
-    fontSize: 15,
+    marginTop: 10,
+    fontSize: 17,
     color: "#000",
   },
   registerLink: {
     color: "#ce4da3ff",
     fontWeight: "600",
-  },
-  errorText: {
-    color: "red",
-    alignSelf: "flex-start",
-    marginBottom: 10,
-  },
-  errorInput: {
-    borderColor: "red",
   },
 });

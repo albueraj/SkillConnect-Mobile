@@ -27,7 +27,7 @@ export default function ProfileReviews({ route, navigation }) {
     } catch (error) {
       console.log("Error fetching reviews:", error);
 
-      // fallback data (some with photos, some without)
+      // fallback data
       setReviews([
         {
           id: "1",
@@ -35,17 +35,16 @@ export default function ProfileReviews({ route, navigation }) {
           service: "Plumbing",
           rating: 4,
           comment:
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean commodo ligula eget dolor.",
-          images: [], // no photo uploaded
+            "Very professional and efficient. Highly recommended for plumbing issues!",
+          images: [],
         },
         {
           id: "2",
           clientName: "Darlene Faith",
           service: "Electrical",
           rating: 5,
-          comment:
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean massa.",
-          images: ["https://via.placeholder.com/150"], // has images
+          comment: "Excellent service! Quick and reliable work.",
+          images: ["https://via.placeholder.com/150"],
         },
       ]);
     }
@@ -55,62 +54,62 @@ export default function ProfileReviews({ route, navigation }) {
     fetchReviews();
   }, []);
 
-  const renderStars = (rating) => {
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-      stars.push(
+  const renderStars = (rating) => (
+    <View style={styles.starsRow}>
+      {[1, 2, 3, 4, 5].map((i) => (
         <Ionicons
           key={i}
           name={i <= rating ? "star" : "star-outline"}
           size={16}
-          color="#f1c40f"
+          color="#facc15"
         />
-      );
-    }
-    return <View style={styles.starsRow}>{stars}</View>;
-  };
+      ))}
+    </View>
+  );
 
   const renderReview = ({ item }) => (
-    <View style={styles.reviewItem}>
+    <View style={styles.reviewCard}>
+      {/* Header */}
       <View style={styles.reviewHeader}>
         <Image
           source={require("../assets/default-profile.png")}
           style={styles.clientProfileImage}
         />
-        <View style={{ marginLeft: 8 }}>
+        <View style={{ marginLeft: 10, flex: 1 }}>
           <Text style={styles.clientName}>{item.clientName}</Text>
           <Text style={styles.clientService}>{item.service}</Text>
         </View>
       </View>
 
+      {/* ⭐ Rating Above Comment */}
       <View style={{ marginTop: 6 }}>{renderStars(item.rating)}</View>
 
+      {/* Comment */}
       <Text style={styles.commentText}>{item.comment}</Text>
 
-      {item.images && item.images.length > 0 && (
+      {/* Photos (if any) */}
+      {item.images?.length > 0 && (
         <View style={styles.imagesRow}>
-          {item.images.map((imgUrl, idx) => (
-            <Image key={idx} source={{ uri: imgUrl }} style={styles.reviewImage} />
+          {item.images.map((uri, idx) => (
+            <Image key={idx} source={{ uri }} style={styles.reviewImage} />
           ))}
         </View>
       )}
-
-      <View style={styles.divider} />
     </View>
   );
 
   const handleButtonPress = () => {
     if (fromFavorites) {
       Alert.alert("Removed", "Worker has been removed from your favorites.");
-      // You can add API logic here to remove favorite
+      // TODO: add API logic here
     } else {
       navigation.navigate("Profile");
     }
   };
 
   return (
-    <ScrollView style={styles.container}>
-      {/* Worker Profile Header */}
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* Worker Header */}
       <View style={styles.profileHeader}>
         <Image
           source={require("../assets/default-profile.png")}
@@ -121,7 +120,7 @@ export default function ProfileReviews({ route, navigation }) {
 
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
-            <Ionicons name="star" size={16} color="#f1c40f" />
+            <Ionicons name="star" size={16} color="#facc15" />
             <Text style={styles.statText}>4.8 Rating</Text>
           </View>
           <View style={styles.statItem}>
@@ -129,37 +128,55 @@ export default function ProfileReviews({ route, navigation }) {
           </View>
         </View>
 
-        {/* ✅ Dynamic Button (Edit Profile or Unfavorite Worker) */}
+        {/* Action Button with Icon */}
         <TouchableOpacity
           style={[
-            styles.editButton,
-            fromFavorites && { backgroundColor: "#f87171" }, // red if from favorites
+            styles.actionButton,
+            fromFavorites && styles.unfavoriteButton,
           ]}
           onPress={handleButtonPress}
+          activeOpacity={0.8}
         >
-          <Text
-            style={[
-              styles.editButtonText,
-              fromFavorites && { color: "#fff" },
-            ]}
-          >
-            {fromFavorites ? "Unfavorite Worker" : "Edit Profile"}
-          </Text>
+          {fromFavorites ? (
+            <>
+              <Ionicons
+                name="heart-outline"
+                size={18}
+                color="#777373ff"
+                style={{ marginRight: 6 }}
+              />
+              <Text style={[styles.actionButtonText, styles.unfavoriteButtonText]}>
+                Unfavorite Worker
+              </Text>
+            </>
+          ) : (
+            <>
+              <Ionicons
+                name="create-outline"
+                size={18}
+                color="#333"
+                style={{ marginRight: 6 }}
+              />
+              <Text style={styles.actionButtonText}>Edit Profile</Text>
+            </>
+          )}
         </TouchableOpacity>
-
-        {/* Divider below button */}
-        <View style={styles.divider} />
       </View>
 
       {/* Reviews Section */}
       <View style={styles.reviewsSection}>
         <Text style={styles.reviewsTitle}>Reviews</Text>
-        <FlatList
-          data={reviews}
-          keyExtractor={(item) => item.id}
-          renderItem={renderReview}
-          scrollEnabled={false}
-        />
+
+        {reviews.length === 0 ? (
+          <Text style={styles.emptyText}>No reviews yet.</Text>
+        ) : (
+          <FlatList
+            data={reviews}
+            keyExtractor={(item) => item.id}
+            renderItem={renderReview}
+            scrollEnabled={false}
+          />
+        )}
       </View>
     </ScrollView>
   );
@@ -171,12 +188,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
 
-  /* HEADER */
+  /* Header */
   profileHeader: {
     alignItems: "center",
-    paddingVertical: 20,
+    paddingVertical: 24,
     borderBottomWidth: 1,
-    borderColor: "#ccc",
+    borderColor: "#eee",
   },
   workerProfileImage: {
     width: 100,
@@ -186,63 +203,82 @@ const styles = StyleSheet.create({
   workerName: {
     fontSize: 20,
     fontWeight: "700",
-    marginTop: 8,
+    marginTop: 10,
+    color: "#222",
   },
   workerSkills: {
     fontSize: 14,
     color: "#666",
+    marginTop: 2,
   },
-
   statsRow: {
     flexDirection: "row",
-    marginTop: 10,
+    marginTop: 12,
   },
   statItem: {
     flexDirection: "row",
     alignItems: "center",
-    marginHorizontal: 8,
+    marginHorizontal: 10,
   },
   statText: {
     marginLeft: 5,
     color: "#444",
+    fontSize: 13,
   },
-  editButton: {
-    marginTop: 10,
-    backgroundColor: "#e5e5e5",
-    paddingHorizontal: 16,
+
+  actionButton: {
+    marginTop: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 18,
     paddingVertical: 8,
     borderRadius: 8,
   },
-  editButtonText: {
+  actionButtonText: {
     fontSize: 14,
-    fontWeight: "500",
+    fontWeight: "600",
+    color: "#333",
+    
+  },
+  unfavoriteButtonText: {
+    color: "#807d7dff",
   },
 
-  /* REVIEWS */
+  /* Reviews */
   reviewsSection: {
-    padding: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 20,
   },
   reviewsTitle: {
     fontSize: 16,
     fontWeight: "700",
-    marginBottom: 10,
+    marginBottom: 12,
+    color: "#222",
   },
-  reviewItem: {
-    paddingVertical: 12,
+  reviewCard: {
+    backgroundColor: "#fafafa",
+    borderRadius: 10,
+    padding: 14,
+    marginBottom: 14,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
   reviewHeader: {
     flexDirection: "row",
     alignItems: "center",
   },
   clientProfileImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
   },
   clientName: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#333",
+    color: "#111",
   },
   clientService: {
     fontSize: 12,
@@ -254,23 +290,23 @@ const styles = StyleSheet.create({
   commentText: {
     fontSize: 13,
     color: "#444",
-    marginTop: 4,
+    marginTop: 6,
+    lineHeight: 18,
   },
   imagesRow: {
     flexDirection: "row",
-    marginTop: 6,
+    marginTop: 8,
   },
   reviewImage: {
-    width: 70,
-    height: 70,
-    borderRadius: 8,
-    marginRight: 6,
+    width: width * 0.25,
+    height: width * 0.25,
+    borderRadius: 10,
+    marginRight: 8,
   },
-  divider: {
-    height: 1,
-    backgroundColor: "#dbdadaff",
-    width: "100%",
-    alignSelf: "center",
-    marginTop: 15,
+  emptyText: {
+    textAlign: "center",
+    color: "#888",
+    fontSize: 13,
+    marginTop: 20,
   },
 });

@@ -80,7 +80,7 @@ export default function CustomDrawer({ children, isLoggedIn, setIsLoggedIn }) {
     if (userRole === "Service Provider") {
       return [
         { name: "My Service", icon: "briefcase-outline", screen: "Service" },
-        { name: "Records", icon: "document-outline", screen: "ClientRecords" },
+        { name: "Records", icon: "document-outline", screen: "Records" },
         { name: "Reviews", icon: "star-outline", screen: "ProfileReviews" },
         ...commonItems,
       ];
