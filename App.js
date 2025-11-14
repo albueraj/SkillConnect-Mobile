@@ -36,6 +36,7 @@ import ProfileReviews from "./screens/ProfileReviews";
 import OrderDetails from "./screens/records/OrderDetails";
 import BlockedWorker from "./screens/BlockedWorker";
 import CustomDrawer from "./components/CustomDrawer";
+import GiveReview from "./screens/GiveReview";
 
 const Stack = createNativeStackNavigator();
 
@@ -384,6 +385,16 @@ export default function App() {
                 ),
               })}
             />
+            <Stack.Screen
+              name="GiveReview"
+              component={GiveReview}
+              options={{
+                presentation: "modal",     // FULL SCREEN MODAL
+                headerShown: false,        // HIDES HEADER FOR CLEAN LOOK
+              }}
+            />
+
+
           </Stack.Navigator>
         )}
       </CustomDrawer>

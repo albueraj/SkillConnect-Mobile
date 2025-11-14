@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
   },
   unblockText: {
     color: "#6e6b6bff",
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "700",
   },
 });

@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
   actionButtonText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#333",
+    color: "#807d7dff",
     
   },
   unfavoriteButtonText: {
