@@ -12,6 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Modal,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -20,7 +21,6 @@ export default function PlaceOrder() {
   const navigation = useNavigation();
   const route = useRoute();
 
-  // Get previous order data (if available)
   const previousOrder = route?.params?.previousOrder || null;
 
   const [name, setName] = useState("Jeremy Albuera");
@@ -31,9 +31,13 @@ export default function PlaceOrder() {
   const [favWorker, setFavWorker] = useState(false);
   const [budget, setBudget] = useState("300");
   const [note, setNote] = useState("ayosin mo lang accla");
+
   const [loading, setLoading] = useState(false);
 
-  // 🧩 Prefill details when coming from OrderDetails screen
+  // ⚡ Review Modal
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewData, setReviewData] = useState(null);
+
   useEffect(() => {
     if (previousOrder) {
       if (previousOrder.worker) setName(previousOrder.worker);
@@ -41,7 +45,9 @@ export default function PlaceOrder() {
       if (previousOrder.type) setTypeOfWork(previousOrder.type);
       if (previousOrder.price) setBudget(previousOrder.price.toString());
       if (previousOrder.date)
-        setNote(`Reorder request based on previous service on ${previousOrder.date}`);
+        setNote(
+          `Reorder request based on previous service on ${previousOrder.date}`
+        );
     }
   }, [previousOrder]);
 
@@ -56,17 +62,18 @@ export default function PlaceOrder() {
     if (!budget.trim()) return "Budget is required.";
     if (isNaN(budget) || Number(budget) <= 0)
       return "Budget must be a valid positive number.";
+
     return null;
   };
 
-  const handleOrder = async () => {
+  const handleNext = () => {
     const error = validateInputs();
     if (error) {
       Alert.alert("Validation Error", error);
       return;
     }
 
-    const orderData = {
+    const data = {
       name,
       address,
       phone,
@@ -74,13 +81,19 @@ export default function PlaceOrder() {
       time,
       favWorker,
       budget,
-      note: note.trim(),
+      note,
     };
 
-    setLoading(true);
-    navigation.navigate("WaitingForWorker", { orderData });
+    setReviewData(data);
+    setShowReviewModal(true);
+  };
 
-    // Reset form
+  const placeFinalOrder = () => {
+    setShowReviewModal(false);
+
+    navigation.navigate("WaitingForWorker", { orderData: reviewData });
+
+    // Reset fields
     setName("");
     setAddress("");
     setPhone("");
@@ -89,7 +102,6 @@ export default function PlaceOrder() {
     setFavWorker(false);
     setBudget("");
     setNote("");
-    setLoading(false);
   };
 
   return (
@@ -100,6 +112,8 @@ export default function PlaceOrder() {
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
+
+          {/* FORM SCROLL */}
           <ScrollView
             contentContainerStyle={styles.scrollContainer}
             showsVerticalScrollIndicator={false}
@@ -151,7 +165,7 @@ export default function PlaceOrder() {
               </Picker>
             </View>
 
-            {/* Time */}
+            {/* Preferred Time */}
             <Text style={styles.label}>Preferred Time *</Text>
             <View style={styles.pickerContainer}>
               <Picker
@@ -197,20 +211,75 @@ export default function PlaceOrder() {
               onChangeText={setNote}
             />
 
-            {/* Submit */}
+          </ScrollView>
+
+          {/* NEXT BUTTON FOOTER */}
+          <View style={styles.footer}>
             <TouchableOpacity
-              style={[styles.button, { backgroundColor: "#ce4da3ff" }]}
-              onPress={handleOrder}
-              activeOpacity={0.8}
+              style={[styles.button, { backgroundColor: "#ce4da3ff", marginBottom: 0 }]}
+              onPress={handleNext}
               disabled={loading}
             >
-              <Text style={styles.buttonText}>
-                {loading ? "Placing Order..." : "Place Order"}
-              </Text>
+              <Text style={styles.buttonText}>Next</Text>
             </TouchableOpacity>
-          </ScrollView>
+          </View>
+
         </View>
       </TouchableWithoutFeedback>
+
+      {/* REVIEW ORDER MODAL */}
+      <Modal visible={showReviewModal} animationType="slide" transparent>
+
+        {/* TAP OUTSIDE CLOSES MODAL */}
+        <TouchableWithoutFeedback onPress={() => setShowReviewModal(false)}>
+          <View style={styles.modalBackground} />
+        </TouchableWithoutFeedback>
+
+        <View style={styles.modalContainerFull}>
+          <Text style={styles.modalTitle}>Review Your Order</Text>
+
+          {/* FULL-VIEW CONTENT — NO SCROLL */}
+          <View style={styles.fullContent}>
+            <Text style={styles.modalLabel}>Full Name</Text>
+            <Text style={styles.modalValue}>{reviewData?.name}</Text>
+
+            <Text style={styles.modalLabel}>Address</Text>
+            <Text style={styles.modalValue}>{reviewData?.address}</Text>
+
+            <Text style={styles.modalLabel}>Phone</Text>
+            <Text style={styles.modalValue}>{reviewData?.phone}</Text>
+
+            <Text style={styles.modalLabel}>Type of Work</Text>
+            <Text style={styles.modalValue}>{reviewData?.typeOfWork}</Text>
+
+            <Text style={styles.modalLabel}>Preferred Time</Text>
+            <Text style={styles.modalValue}>{reviewData?.time}</Text>
+
+            <Text style={styles.modalLabel}>Favorite Worker</Text>
+            <Text style={styles.modalValue}>
+              {reviewData?.favWorker ? "Yes, prioritize" : "No"}
+            </Text>
+
+            <Text style={styles.modalLabel}>Budget (₱)</Text>
+            <Text style={styles.modalValue}>{reviewData?.budget}</Text>
+
+            <Text style={styles.modalLabel}>Note</Text>
+            <Text style={styles.modalValue}>{reviewData?.note || "None"}</Text>
+          </View>
+
+          {/* PLACE ORDER BUTTON FOOTER */}
+          <View style={styles.footer}>
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: "#ce4da3ff", marginBottom: 0 }]}
+              onPress={placeFinalOrder}
+            >
+              <Text style={styles.buttonText}>Place Order</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+      </Modal>
+
     </KeyboardAvoidingView>
   );
 }
@@ -223,7 +292,7 @@ const styles = StyleSheet.create({
     paddingTop: 40,
   },
   scrollContainer: {
-    paddingBottom: 100,
+    paddingBottom: 20,
   },
   label: {
     fontSize: 14,
@@ -268,19 +337,56 @@ const styles = StyleSheet.create({
     backgroundColor: "#f9f9f9",
   },
   button: {
-    paddingVertical: 15,
+    paddingVertical: 20,
+    paddingHorizontal: 25,
     borderRadius: 10,
     alignItems: "center",
     marginTop: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-    elevation: 4,
+    marginBottom: 20,
   },
   buttonText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
+  },
+
+  // FOOTER BUTTON
+  footer: {
+    padding: 16,
+    marginBottom: 20,
+  },
+
+  // MODAL STYLES
+  modalBackground: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+  },
+  modalContainerFull: {
+    backgroundColor: "#fff",
+    padding: 25,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    height: "75%",
+    justifyContent: "flex-start",
+  },
+  fullContent: {
+    flexGrow: 1,
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    marginBottom: 15,
+  },
+  modalLabel: {
+    fontSize: 14,
+    fontWeight: "bold",
+    marginTop: 12,
+    color: "#555",
+  },
+  modalValue: {
+    fontSize: 15,
+    color: "#222",
+    marginBottom: 5,
   },
 });

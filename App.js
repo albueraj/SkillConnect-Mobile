@@ -5,6 +5,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 
+
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 
@@ -37,6 +38,7 @@ import OrderDetails from "./screens/records/OrderDetails";
 import BlockedWorker from "./screens/BlockedWorker";
 import CustomDrawer from "./components/CustomDrawer";
 import GiveReview from "./screens/GiveReview";
+import NotificationScreen from "./screens/NotificationScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -117,18 +119,38 @@ export default function App() {
               headerShown: true,
               headerTitleAlign: "center",
               headerTitleStyle: { fontSize: 17 },
+              headerShadowVisible: false,
               headerLeft: () => (
-                <TouchableOpacity
-                  onPress={toggleDrawer}
-                  style={{ marginLeft: 10 }}
-                >
-                  <Ionicons name="menu" size={24} color="#000" />
+                <TouchableOpacity onPress={toggleDrawer} style={{ marginLeft: 10 }}>
+                  <Ionicons name="reorder-three" size={24} color="#000" />
                 </TouchableOpacity>
               ),
             }}
+
           >
             {/* Regular Screens */}
-            <Stack.Screen name="Home" component={Home} />
+           <Stack.Screen
+                name="Home"
+                component={Home}
+                options={({ navigation }) => ({
+                  headerTitleAlign: "center",
+                  headerTitleStyle: { fontSize: 17 },
+                  headerShadowVisible: false,
+                  headerLeft: () => (
+                    <TouchableOpacity onPress={toggleDrawer} style={{ marginLeft: 10 }}>
+                      <Ionicons name="reorder-three" size={24} color="#000" />
+                    </TouchableOpacity>
+                  ),
+                  headerRight: () => (
+                    <TouchableOpacity
+                      onPress={() => navigation.navigate("NotificationScreen")}
+                      style={{ marginRight: 15 }}
+                    >
+                      <Ionicons name="notifications-outline" size={24} color="#000" />
+                    </TouchableOpacity>
+                  ),
+                })}
+              />
             <Stack.Screen name="Login">
               {(props) => <Login {...props} setIsLoggedIn={setIsLoggedIn} />}
             </Stack.Screen>
@@ -186,6 +208,7 @@ export default function App() {
             />
             <Stack.Screen name="WaitingForWorker" component={WaitingForWorker} />
             <Stack.Screen name="Chat" component={Chat} options={{ headerShown: false }} />
+            <Stack.Screen name="NotificationScreen" component={NotificationScreen} options={{ headerTitle: "Notifications" }}/>
 
             {/* Modified Screens */}
             <Stack.Screen
@@ -338,6 +361,8 @@ export default function App() {
                 ),
               })}
             />
+
+          
 
             <Stack.Screen
               name="Favourites"
